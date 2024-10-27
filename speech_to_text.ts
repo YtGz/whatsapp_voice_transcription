@@ -1,13 +1,14 @@
 import axios from 'axios';
 import FormData from 'form-data';
-import { readFileStream } from 'bun';
 import { createClient } from "@deepgram/sdk";
 
 import 'dotenv/config';
 
 async function transcribeAudioWithOpenAI(filePath: string): Promise<any> {
   const formData = new FormData();
-  formData.append('file', readFileStream(filePath));
+  const file = Bun.file(filePath);
+  const audioStream = Buffer.from(await Bun.readableStreamToArrayBuffer(file.stream()));
+  formData.append('file', audioStream);
   formData.append('model', process.env.WHISPER_MODEL || 'whisper-1');
   formData.append('response_format', 'json');
   formData.append('prompt', 'The transcript should have natural paragraph breaks and bullet points for any action steps. The output should be easy to read and follow.');
@@ -27,7 +28,8 @@ async function transcribeAudioWithOpenAI(filePath: string): Promise<any> {
 async function transcribeAudioWithDeepgram(filePath: string): Promise<string | null> {
   const deepgramApiKey = process.env.DEEPGRAM_API_KEY;
   const deepgram = createClient(deepgramApiKey!);
-  const audioStream = readFileStream(filePath);
+  const file = Bun.file(filePath);
+  const audioStream = Buffer.from(await Bun.readableStreamToArrayBuffer(file.stream()));
 
   try {
     const { result } = await deepgram.listen.prerecorded.transcribeFile(audioStream, {
