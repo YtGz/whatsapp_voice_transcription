@@ -4,7 +4,7 @@
   "description": "Transcribe voice notes sent via WhatsApp.",
   "main": "index.js",
   "scripts": {
-    "start": "node whatsapp_voice_note_alert.js",
+    "start": "bun run whatsapp_voice_note_alert.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,12 +21,20 @@
     "ffprobe-client": "^1.1.6",
     "fluent-ffmpeg": "^2.1.2",
     "form-data": "^4.0.0",
-    "fs": "^0.0.1-security",
     "natural": "^7.0.0",
     "openai": "^4.35.0",
     "puppeteer": "^22.6.5",
     "qrcode-generator": "^1.4.4",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.24.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "overrides": {
+    "@whiskeysockets/libsignal-node": "github:jlucaso1/libsignal-node#feat-support-other-environments"
   }
 }

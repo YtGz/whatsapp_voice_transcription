@@ -38,10 +38,10 @@ Before you start, make sure you have the following installed:
    cd whatsapp_voice_transcription
    ```
 
-3. Install the dependencies using npm:
+3. Install the dependencies using bun:
 
    ```
-   npm install
+   bun install
    ```
 
 4. Create a `.env` file by copying the example file:
@@ -55,7 +55,7 @@ Before you start, make sure you have the following installed:
 6. Run the application:
 
    ```
-   npm start
+   bun run start
    ```
    
 7. Use the WhatsApp Web interface to scan the QR code generated in the console to log in.
