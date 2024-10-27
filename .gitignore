@@ -32,3 +32,5 @@ yarn-error.log*
 
 # my auth session
 .wwebjs_auth
+
+auth_info_baileys
