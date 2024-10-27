@@ -44,8 +44,8 @@ checkEnvVariables();
 
 // Prompt for both AI models
 const AI_PROMPT = {
-  OPENAI: "Summarize the message in 1-2 sentences max.",
-  ANTHROPIC: "Summarize the message in 1-2 sentences max."
+  OPENAI: "Fasse die Nachricht in max. 1-2 Sätzen zusammen.",
+  ANTHROPIC: "Fasse die Nachricht in max. 1-2 Sätzen zusammen."
 };
 
 // Message output to the user
@@ -83,7 +83,7 @@ async function getOpenAISummary(text) {
       temperature: 0.5,
     });
 
-    return chatCompletion.data.choices[0].message.content.trim();
+    return chatCompletion.choices[0].message.content.trim();
   } catch (error) {
     console.error('Error during OpenAI summary generation:', error);
     throw error;
@@ -92,25 +92,25 @@ async function getOpenAISummary(text) {
 
 
 async function getAnthropicSummary(text) {
-    console.log("Debug: Attempting to summarize text:", text);  // Debug log to check what text is being sent
-    if (!text.trim()) {
-        console.log("Error: No content to summarize");
-        return "No content received for summarization.";
-    }
-    
-    try {
-        const chatCompletion = await anthropic.messages.create({
-            messages: [{ role: 'user', content: text }],
-            model: config.ANTHROPIC_MODEL,
-            max_tokens: 2000,
-            system: AI_PROMPT.ANTHROPIC,
-        });
+  console.log("Debug: Attempting to summarize text:", text);  // Debug log to check what text is being sent
+  if (!text.trim()) {
+    console.log("Error: No content to summarize");
+    return "No content received for summarization.";
+  }
 
-        return chatCompletion.content[0].text;
-    } catch (error) {
-        console.error('Error during Claude summary generation:', error);
-        throw error;
-    }
+  try {
+    const chatCompletion = await anthropic.messages.create({
+      messages: [{ role: 'user', content: text }],
+      model: config.ANTHROPIC_MODEL,
+      max_tokens: 2000,
+      system: AI_PROMPT.ANTHROPIC,
+    });
+
+    return chatCompletion.content[0].text;
+  } catch (error) {
+    console.error('Error during Claude summary generation:', error);
+    throw error;
+  }
 }
 
 async function getSummaryAndActionSteps(text) {
@@ -175,7 +175,13 @@ async function main() {
 
               let outputText = '';
               if (transcription) {
-                outputText = transcription;
+                const VOICE_TRANSCRIPTION_SERVICE = process.env.VOICE_TRANSCRIPTION_SERVICE || 'OPENAI';
+
+                if (VOICE_TRANSCRIPTION_SERVICE === 'OPENAI') {
+                  outputText = transcription.text;
+                } else {
+                  outputText = transcription;
+                }
                 console.log('Output text:', outputText);
               }
 
