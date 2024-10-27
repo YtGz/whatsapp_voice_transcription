@@ -17,6 +17,7 @@ const config = {
   WHISPER_MODEL: process.env.WHISPER_MODEL || 'whisper-1',
   DEEPGRAM_MODEL: process.env.DEEPGRAM_MODEL || 'nova-2',
   GENERATE_SUMMARY: process.env.GENERATE_SUMMARY || 'true', // Parse as boolean
+  SUMMARY_THRESHOLD: process.env.SUMMARY_THRESHOLD || 800
 };
 
 // Check environment variables
@@ -126,6 +127,11 @@ async function getSummaryAndActionSteps(text) {
   }
 }
 
+function boldSpeakerLabels(text) {
+  // Use a regular expression to find "Speaker ?:" patterns and make them bold
+  return text.replace(/(Speaker \d+:)/g, '*$1*');
+}
+
 function italicizeText(text) {
   return text.split('\n')
     .map(paragraph => paragraph.trim() ? `_${paragraph}_` : paragraph)
@@ -188,13 +194,13 @@ async function main() {
                 } else {
                   outputText = transcription;
                 }
-                console.log('Output text:', outputText);
               }
 
               if (outputText) {
                 const senderId = m.key.remoteJid;
 
-                if (config.GENERATE_SUMMARY === 'true') {
+                // Check if the message is too long and needs a summary
+                if (config.GENERATE_SUMMARY === 'true' && outputText.length > config.SUMMARY_THRESHOLD) {
                   console.log(MESSAGE_OUTPUT.GENERATING_SUMMARY);
                   const summaryAndActionSteps = await getSummaryAndActionSteps(outputText);
                   console.log(MESSAGE_OUTPUT.SUMMARY_GENERATED);
@@ -203,7 +209,8 @@ async function main() {
                   console.log(MESSAGE_OUTPUT.SUMMARY_SENT);
                 }
 
-                await sock.sendMessage(senderId, { text: `📜 *Transkript*\n${italicizeText(outputText)}` });
+                // Always send the transcript
+                await sock.sendMessage(senderId, { text: `📜 *Transkript*\n${italicizeText(boldSpeakerLabels(outputText))}` });
                 console.log(MESSAGE_OUTPUT.TRANSCRIPTION_SENT);
               } else {
                 console.log(MESSAGE_OUTPUT.PROCESSING_ERROR);
