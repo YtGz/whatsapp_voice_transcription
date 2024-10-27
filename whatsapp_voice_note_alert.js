@@ -126,6 +126,12 @@ async function getSummaryAndActionSteps(text) {
   }
 }
 
+function italicizeText(text) {
+  return text.split('\n')
+    .map(paragraph => paragraph.trim() ? `_${paragraph}_` : paragraph)
+    .join('\n');
+}
+
 async function main() {
   try {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
@@ -193,15 +199,16 @@ async function main() {
                   const summaryAndActionSteps = await getSummaryAndActionSteps(outputText);
                   console.log(MESSAGE_OUTPUT.SUMMARY_GENERATED);
 
-                  await sock.sendMessage(senderId, { text: `*Summary:*\n${summaryAndActionSteps}` });
+                  await sock.sendMessage(senderId, { text: `🤖 *TL;DR*\n${italicizeText(summaryAndActionSteps)}` });
                   console.log(MESSAGE_OUTPUT.SUMMARY_SENT);
                 }
 
-                await sock.sendMessage(senderId, { text: `*Transcript:*${outputText}` });
+                await sock.sendMessage(senderId, { text: `📜 *Transkript*\n${italicizeText(outputText)}` });
                 console.log(MESSAGE_OUTPUT.TRANSCRIPTION_SENT);
               } else {
                 console.log(MESSAGE_OUTPUT.PROCESSING_ERROR);
               }
+
             } catch (error) {
               console.log('Error:', error);
             } finally {
