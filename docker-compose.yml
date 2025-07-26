@@ -1,8 +1,21 @@
+version: '3'
+
 services:
   whatsapp-transcription:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: whatsapp-transcription
+    restart: unless-stopped
     volumes:
       - ./.env:/app/.env # to allow easy configuration changes without rebuilding
       - ./auth_info_baileys:/app/auth_info_baileys # to persist WhatsApp authentication data between container restarts, so one doesn't need to scan the QR code every time
-    restart: unless-stopped
+    environment:
+      - TZ=America/New_York
+      - SERVER_ENV=true
+      # You can uncomment the following lines to set them here instead of in .env file
+      # - AUTH_METHOD=PAIRING_CODE
+      # - WHATSAPP_PHONE_NUMBER=1234567890
+    ports:
+      # Only needed if you plan to access a web interface in the future
+      - "3000:3000"

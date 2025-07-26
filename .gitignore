@@ -30,7 +30,12 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# my auth session
-.wwebjs_auth
+# WhatsApp authentication
+auth_info_baileys/
+.wwebjs_auth/
 
-auth_info_baileys
+# WhatsApp Web cache
+.wwebjs_cache/
+
+# Plandex
+.plandex/
