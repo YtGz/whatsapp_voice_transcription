@@ -1,0 +1,8 @@
+services:
+  whatsapp-transcription:
+    build: .
+    container_name: whatsapp-transcription
+    volumes:
+      - ./.env:/app/.env # to allow easy configuration changes without rebuilding
+      - ./auth_info_baileys:/app/auth_info_baileys # to persist WhatsApp authentication data between container restarts, so one doesn't need to scan the QR code every time
+    restart: unless-stopped

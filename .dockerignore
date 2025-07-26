@@ -1,0 +1,6 @@
+node_modules
+.env
+.git
+.gitignore
+README.md
+auth_info_baileys

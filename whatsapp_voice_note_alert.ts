@@ -24,6 +24,7 @@ const config: {
   WHISPER_MODEL: process.env.WHISPER_MODEL || 'whisper-1',
   DEEPGRAM_MODEL: process.env.DEEPGRAM_MODEL || 'nova-2',
   GENERATE_SUMMARY: process.env.GENERATE_SUMMARY || 'true', // Parse as boolean
+  SUMMARY_THRESHOLD: process.env.SUMMARY_THRESHOLD || 800
 };
 
 // Check environment variables
@@ -54,8 +55,8 @@ const AI_PROMPT: {
   OPENAI: string;
   ANTHROPIC: string;
 } = {
-  OPENAI: "Summarize the message in 1-2 sentences max.",
-  ANTHROPIC: "Summarize the message in 1-2 sentences max."
+  OPENAI: "Fasse die Nachricht in max. 1-2 Sätzen zusammen.",
+  ANTHROPIC: "Fasse die Nachricht in max. 1-2 Sätzen zusammen."
 };
 
 // Message output to the user
@@ -133,11 +134,9 @@ async function getAnthropicSummary(text: string): Promise<string> {
     const result = chatCompletion.content[0];
     if (result.type === 'text') {
       return result.text;
-
     } else {
       throw new Error('Anthropic model tried to use tool instead of returning a text response.');
     }
-
   } catch (error) {
     console.error('Error during Claude summary generation:', error);
     throw error;
@@ -156,6 +155,17 @@ async function getSummaryAndActionSteps(text: string): Promise<string> {
     console.error('Error during summary and action steps generation:', error);
     return '';
   }
+}
+
+function boldSpeakerLabels(text: string): string {
+  // Use a regular expression to find "Speaker ?:" patterns and make them bold
+  return text.replace(/(Speaker \d+:)/g, '*$1*');
+}
+
+function italicizeText(text: string): string {
+  return text.split('\n')
+    .map(paragraph => paragraph.trim() ? `_${paragraph}_` : paragraph)
+    .join('\n');
 }
 
 async function main(): Promise<void> {
@@ -212,27 +222,35 @@ async function main(): Promise<void> {
 
               let outputText = '';
               if (transcription) {
-                outputText = transcription;
-                console.log('Output text:', outputText);
+                const VOICE_TRANSCRIPTION_SERVICE = process.env.VOICE_TRANSCRIPTION_SERVICE || 'OPENAI';
+
+                if (VOICE_TRANSCRIPTION_SERVICE === 'OPENAI') {
+                  outputText = transcription.text;
+                } else {
+                  outputText = transcription;
+                }
               }
 
               if (outputText) {
                 const senderId = m.key.remoteJid!;
 
-                if (config.GENERATE_SUMMARY === 'true') {
+                // Check if the message is too long and needs a summary
+                if (config.GENERATE_SUMMARY === 'true' && outputText.length > config.SUMMARY_THRESHOLD) {
                   console.log(MESSAGE_OUTPUT.GENERATING_SUMMARY);
                   const summaryAndActionSteps = await getSummaryAndActionSteps(outputText);
                   console.log(MESSAGE_OUTPUT.SUMMARY_GENERATED);
 
-                  await sock.sendMessage(senderId, { text: `*Summary:*\n${summaryAndActionSteps}` });
+                  await sock.sendMessage(senderId, { text: `🤖 *TL;DR*\n${italicizeText(summaryAndActionSteps)}` });
                   console.log(MESSAGE_OUTPUT.SUMMARY_SENT);
                 }
 
-                await sock.sendMessage(senderId, { text: `*Transcript:*${outputText}` });
+                // Always send the transcript
+                await sock.sendMessage(senderId, { text: `📜 *Transkript*\n${italicizeText(boldSpeakerLabels(outputText))}` });
                 console.log(MESSAGE_OUTPUT.TRANSCRIPTION_SENT);
               } else {
                 console.log(MESSAGE_OUTPUT.PROCESSING_ERROR);
               }
+
             } catch (error) {
               console.log('Error:', error);
             } finally {

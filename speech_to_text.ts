@@ -34,8 +34,12 @@ async function transcribeAudioWithDeepgram(filePath: string): Promise<string | n
   try {
     const { result } = await deepgram.listen.prerecorded.transcribeFile(audioStream, {
       model: process.env.DEEPGRAM_MODEL || 'nova-2',
-      language: 'en',
+      language: 'de',
       smart_format: true,
+      punctuate: true,
+      paragraphs: true,
+      utterances: true,
+      diarize: true
     });
 
     if (
