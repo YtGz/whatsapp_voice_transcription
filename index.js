@@ -52,11 +52,28 @@ function checkEnvVariables() {
 
 checkEnvVariables();
 
-// Prompt for both AI models
-const AI_PROMPT = {
-  OPENAI: "Summarize the message in 1-2 sentences max.",
-  ANTHROPIC: "Summarize the message in 1-2 sentences max."
-};
+// Function to detect language and get appropriate prompt
+function getAIPrompt(text) {
+  // Simple language detection based on common words
+  const germanWords = ['der', 'die', 'das', 'und', 'ist', 'ich', 'du', 'er', 'sie', 'es', 'wir', 'ihr', 'sie', 'ein', 'eine', 'einen', 'mit', 'auf', 'für', 'von', 'zu', 'an', 'bei', 'nach', 'über', 'unter', 'vor', 'durch', 'gegen', 'ohne'];
+  const englishWords = ['the', 'and', 'is', 'are', 'was', 'were', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'a', 'an', 'with', 'on', 'for', 'from', 'to', 'at', 'by', 'after', 'over', 'under', 'before', 'through', 'against', 'without'];
+  
+  const words = text.toLowerCase().split(/\s+/);
+  const germanCount = words.filter(word => germanWords.includes(word)).length;
+  const englishCount = words.filter(word => englishWords.includes(word)).length;
+  
+  if (germanCount > englishCount) {
+    return {
+      openai: "Fasse die Nachricht in max. 1-2 Sätzen zusammen.",
+      anthropic: "Fasse die Nachricht in max. 1-2 Sätzen zusammen."
+    };
+  } else {
+    return {
+      openai: "Summarize the message in 1-2 sentences max.",
+      anthropic: "Summarize the message in 1-2 sentences max."
+    };
+  }
+}
 
 // Message output to the user
 const MESSAGE_OUTPUT = {
@@ -81,11 +98,12 @@ const anthropic = new Anthropic({
 
 async function getOpenAISummary(text) {
   try {
+    const prompts = getAIPrompt(text);
     // Use the OpenAI SDK to generate a summary
     const chatCompletion = await openai.chat.completions.create({
       model: config.OPENAI_MODEL,
       messages: [
-        { role: 'system', content: AI_PROMPT.OPENAI },
+        { role: 'system', content: prompts.openai },
         { role: 'user', content: text },
       ],
       max_tokens: 2000,
@@ -109,11 +127,12 @@ async function getAnthropicSummary(text) {
     }
     
     try {
+        const prompts = getAIPrompt(text);
         const chatCompletion = await anthropic.messages.create({
             messages: [{ role: 'user', content: text }],
             model: config.ANTHROPIC_MODEL,
             max_tokens: 2000,
-            system: AI_PROMPT.ANTHROPIC,
+            system: prompts.anthropic,
         });
 
         return chatCompletion.content[0].text;
@@ -393,12 +412,14 @@ async function main() {
               if (transcription) {
                 const senderId = m.key.remoteJid;
 
-                if (config.GENERATE_SUMMARY === 'true') {
+                // Check if the message exceeds 2000 words and needs a summary
+                const wordCount = transcription.split(/\s+/).length;
+                if (config.GENERATE_SUMMARY === 'true' && wordCount > 2000) {
                   const summaryAndActionSteps = await getSummaryAndActionSteps(transcription);
-                  await sock.sendMessage(senderId, { text: `*Summary:*\n${summaryAndActionSteps}` });
+                  await sock.sendMessage(senderId, { text: `🤖 *TL;DR*\n_${summaryAndActionSteps}_` });
                 }
 
-                await sock.sendMessage(senderId, { text: `*Transcript:*\n${transcription}` });
+                await sock.sendMessage(senderId, { text: `📜 *Transkript*\n_${transcription}_` });
                 console.log('Processing completed successfully.');
               } else {
                 console.log(MESSAGE_OUTPUT.PROCESSING_ERROR);
